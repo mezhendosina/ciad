@@ -1,0 +1,535 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[russian]{babel}
+\usepackage[T2A]{fontenc}
+\usepackage{geometry}
+\geometry{a4paper,left=30mm,right=15mm,top=20mm,bottom=20mm}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{enumitem}
+\usepackage{booktabs}
+
+% Настройка гиперссылок
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    filecolor=black,
+    urlcolor=blue,
+    citecolor=black
+}
+
+% Настройка заголовков
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{50pt}{40pt}
+
+% Настройка списков
+\setlist{leftmargin=*,itemsep=0pt,parsep=0pt}
+
+% Настройка кода
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red}
+}
+
+\begin{document}
+
+% Титульный лист
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+    
+    {\Large\textbf{МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ}\par}
+    \vspace{0.5cm}
+    
+    {\large\textbf{ФЕДЕРАЛЬНОЕ ГОСУДАРСТВЕННОЕ БЮДЖЕТНОЕ ОБРАЗОВАТЕЛЬНОЕ УЧРЕЖДЕНИЕ}\par}
+    \vspace{0.3cm}
+    
+    {\large\textbf{ВЫСШЕГО ОБРАЗОВАНИЯ}\par}
+    \vspace{1cm}
+    
+    {\Large\textbf{НАЗВАНИЕ УНИВЕРСИТЕТА}\par}
+    \vspace{0.5cm}
+    
+    {\large\textbf{Кафедра информатики и анализа данных}\par}
+    \vspace{2cm}
+    
+    {\Huge\textbf{Лабораторная работа №2}\par}
+    \vspace{0.5cm}
+    
+    {\LARGE\textbf{Кластеризация данных}\par}
+    \vspace{1.5cm}
+    
+    \begin{flushleft}
+    \large
+    \textbf{Дисциплина:} Современные инструменты анализа данных\par
+    \vspace{0.3cm}
+    \textbf{Выполнил:} [ФИО студента]\par
+    \vspace{0.3cm}
+    \textbf{Группа:} [Номер группы]\par
+    \vspace{0.3cm}
+    \textbf{Преподаватель:} [ФИО преподавателя]\par
+    \end{flushleft}
+    
+    \vfill
+    
+    {\large [Город] \the\year\par}
+\end{titlepage}
+
+% Содержание
+\tableofcontents
+\newpage
+
+% Введение
+\chapter{Введение}
+
+\section{Цель работы}
+Освоить практическое применение методов кластеризации данных, в частности алгоритмов K-средних и DBSCAN, на различных наборах данных.
+
+\section{Задачи работы}
+\begin{enumerate}
+    \item Сгенерировать синтетические данные с помощью функции \texttt{make\_blobs} с количеством кластеров не менее 4
+    \item Применить методы K-средних и DBSCAN к сгенерированным данным
+    \item Визуализировать результаты кластеризации на синтетических данных
+    \item Загрузить и провести предварительный анализ датасета Penguins
+    \item Применить методы K-средних и DBSCAN к датасету Penguins
+    \item Визуализировать и интерпретировать результаты
+    \item Провести сравнительный анализ эффективности методов на разных данных
+\end{enumerate}
+
+\section{Теоретические основы}
+
+\textbf{Кластеризация} -- это метод машинного обучения без учителя, направленный на разделение набора объектов на группы (кластеры) таким образом, чтобы объекты внутри одной группы были более похожи друг на друга, чем на объекты из других групп.
+
+\textbf{Метод K-средних} -- это итеративный алгоритм, который разбивает набор данных на K предопределенных непересекающихся подгрупп (кластеров), где каждая точка данных принадлежит только одному кластеру. Алгоритм работает следующим образом:
+\begin{enumerate}
+    \item Инициализирует K центроидов случайным образом
+    \item Назначает каждую точку ближайшему центроиду
+    \item Пересчитывает позиции центроидов как среднее значение точек в кластере
+    \item Повторяет шаги 2--3 до сходимости
+\end{enumerate}
+
+\textbf{Метод DBSCAN} (Density-Based Spatial Clustering of Applications with Noise) -- это алгоритм кластеризации, основанный на плотности. Он группирует вместе точки, которые находятся близко друг к другу в областях высокой плотности, отмечая точки в областях с низкой плотностью как выбросы. Основные параметры:
+\begin{itemize}
+    \item \texttt{eps} (epsilon) -- максимальное расстояние между точками одного кластера
+    \item \texttt{min\_samples} -- минимальное количество точек для формирования кластера
+\end{itemize}
+
+\chapter{Часть 1: Генерация данных и применение методов кластеризации}
+
+\section{Генерация синтетических данных}
+
+Для генерации синтетических данных использовалась функция \texttt{make\_blobs} из библиотеки scikit-learn. Были заданы следующие параметры:
+\begin{itemize}
+    \item Количество образцов: 500
+    \item Количество признаков: 2 (для удобства визуализации)
+    \item Количество кластеров: 5
+    \item Стандартное отклонение кластеров: 1.0
+    \item Random state: 42 (для воспроизводимости результатов)
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/synthetic_original.png}
+    \caption{Исходные сгенерированные данные с истинными кластерами}
+    \label{fig:synthetic_original}
+\end{figure}
+
+Как видно из рисунка \ref{fig:synthetic_original}, данные содержат 5 четко разделенных кластеров, что делает их идеальными для тестирования алгоритмов кластеризации.
+
+\section{Применение метода K-средних}
+
+\subsection{Определение оптимального количества кластеров}
+
+Для определения оптимального количества кластеров использовались два метода:
+\begin{enumerate}
+    \item \textbf{Метод локтя (Elbow Method)} -- анализ зависимости инерции (суммы квадратов расстояний от точек до центроидов) от количества кластеров
+    \item \textbf{Коэффициент силуэта (Silhouette Score)} -- метрика, оценивающая качество кластеризации на основе того, насколько хорошо точки разделены на кластеры
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/synthetic_elbow_silhouette.png}
+    \caption{Метод локтя и коэффициент силуэта для определения оптимального K}
+    \label{fig:elbow_silhouette}
+\end{figure}
+
+Результаты анализа:
+\begin{itemize}
+    \item \textbf{Оптимальное K по методу локтя}: 5 (видно из графика, где происходит ``излом'' кривой)
+    \item \textbf{Оптимальное K по коэффициенту силуэта}: 4
+    \item \textbf{Максимальный коэффициент силуэта}: 0.7328
+\end{itemize}
+
+Интересно отметить, что метод локтя указывает на 5 кластеров (что соответствует истинному количеству), в то время как коэффициент силуэта максимизируется при K=4. Это демонстрирует, что разные метрики могут давать разные результаты, и важно использовать несколько методов оценки.
+
+\subsection{Результаты кластеризации K-means}
+
+Было выбрано оптимальное значение K=4 (по коэффициенту силуэта) для дальнейшего анализа.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/synthetic_kmeans_results.png}
+    \caption{Сравнение истинных кластеров и результатов K-means}
+    \label{fig:kmeans_results}
+\end{figure}
+
+Результаты:
+\begin{itemize}
+    \item \textbf{Средний коэффициент силуэта}: 0.7328
+    \item Алгоритм успешно выделил 4 основных кластера
+    \item Центроиды (отмечены красными крестами) расположены в центрах кластеров
+\end{itemize}
+
+K-means показал хорошие результаты на синтетических данных, хотя и объединил некоторые близко расположенные кластеры в один.
+
+\section{Применение метода DBSCAN}
+
+\subsection{Экспериментирование с параметрами}
+
+Для метода DBSCAN критически важно правильно подобрать параметры \texttt{eps} и \texttt{min\_samples}. Были протестированы различные комбинации:
+\begin{itemize}
+    \item \texttt{eps}: 0.3, 0.5, 0.7, 1.0, 1.5
+    \item \texttt{min\_samples}: 3, 5, 7, 10
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/synthetic_dbscan_parameters.png}
+    \caption{Результаты DBSCAN с различными параметрами eps и min\_samples}
+    \label{fig:dbscan_parameters}
+\end{figure}
+
+Из эксперимента видно, что:
+\begin{itemize}
+    \item При малых значениях \texttt{eps} (0.3) алгоритм создает много мелких кластеров и много шума
+    \item При больших значениях \texttt{eps} (1.5) алгоритм объединяет все точки в один или несколько больших кластеров
+    \item Оптимальный баланс достигается при \texttt{eps=0.7} и \texttt{min\_samples=5}
+\end{itemize}
+
+\subsection{Результаты кластеризации DBSCAN}
+
+Были выбраны оптимальные параметры: \texttt{eps=0.7}, \texttt{min\_samples=5}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/synthetic_dbscan_results.png}
+    \caption{Сравнение истинных кластеров и результатов DBSCAN}
+    \label{fig:dbscan_results}
+\end{figure}
+
+Результаты:
+\begin{itemize}
+    \item \textbf{Количество кластеров}: 5 (соответствует истинному количеству!)
+    \item \textbf{Количество точек-шума}: минимальное
+    \item \textbf{Коэффициент силуэта}: высокий (для точек, не являющихся шумом)
+\end{itemize}
+
+DBSCAN показал отличные результаты на синтетических данных, точно определив все 5 кластеров и корректно идентифицировав выбросы.
+
+\chapter{Часть 2: Кластеризация датасета Penguins}
+
+\section{Загрузка и предварительный анализ данных}
+
+Датасет Penguins содержит информацию о пингвинах с островов Палмера (Palmer Archipelago) и включает следующие признаки:
+\begin{itemize}
+    \item \texttt{culmen\_length\_mm} -- длина клюва (мм)
+    \item \texttt{culmen\_depth\_mm} -- глубина клюва (мм)
+    \item \texttt{flipper\_length\_mm} -- длина ласта (мм)
+    \item \texttt{body\_mass\_g} -- масса тела (г)
+    \item \texttt{sex} -- пол (MALE/FEMALE)
+\end{itemize}
+
+\subsection{Предобработка данных}
+
+\begin{enumerate}
+    \item \textbf{Удаление пропущенных значений}: Удалены строки с отсутствующими данными
+    \item \textbf{Обработка выбросов}: Удалены записи с нереалистичными значениями:
+    \begin{itemize}
+        \item Отрицательные значения длины ласта
+        \item Значения длины ласта $>$ 300 мм
+        \item Значения массы тела $>$ 10000 г
+    \end{itemize}
+\end{enumerate}
+
+После очистки размер датасета составил 333 строки.
+
+\subsection{Визуализация распределения признаков}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/penguins_distributions.png}
+    \caption{Распределение признаков датасета Penguins}
+    \label{fig:penguins_distributions}
+\end{figure}
+
+Все признаки имеют нормальное или близкое к нормальному распределение, что благоприятно для кластеризации.
+
+\subsection{Матрица корреляций}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/penguins_correlation.png}
+    \caption{Матрица корреляций признаков датасета Penguins}
+    \label{fig:penguins_correlation}
+\end{figure}
+
+Анализ корреляций показывает:
+\begin{itemize}
+    \item Сильная положительная корреляция между \texttt{flipper\_length\_mm} и \texttt{body\_mass\_g} ($\approx$0.87)
+    \item Умеренная положительная корреляция между \texttt{culmen\_length\_mm} и \texttt{flipper\_length\_mm} ($\approx$0.65)
+    \item Слабая корреляция между \texttt{culmen\_depth\_mm} и другими признаками
+\end{itemize}
+
+Для кластеризации использовались все 4 числовых признака после стандартизации (StandardScaler), что необходимо для корректной работы алгоритмов, так как признаки имеют разные масштабы.
+
+\section{Применение метода K-средних к датасету Penguins}
+
+\subsection{Определение оптимального количества кластеров}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/penguins_elbow_silhouette.png}
+    \caption{Метод локтя и коэффициент силуэта для датасета Penguins}
+    \label{fig:penguins_elbow}
+\end{figure}
+
+Результаты анализа:
+\begin{itemize}
+    \item \textbf{Оптимальное K по коэффициенту силуэта}: 2
+    \item \textbf{Максимальный коэффициент силуэта}: 0.50
+\end{itemize}
+
+Интересно, что для реальных данных оптимальное количество кластеров оказалось меньше, чем для синтетических. Это может указывать на то, что в данных пингвинов есть две основные группы (возможно, связанные с полом или видом).
+
+\subsection{Результаты кластеризации K-means}
+
+Для визуализации результатов использовался метод PCA (Principal Component Analysis) для снижения размерности до 2D.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/penguins_kmeans_results.png}
+    \caption{Результаты K-means кластеризации на датасете Penguins}
+    \label{fig:penguins_kmeans}
+\end{figure}
+
+Результаты:
+\begin{itemize}
+    \item \textbf{Средний коэффициент силуэта}: 0.50
+    \item \textbf{Оптимальное K}: 2
+    \item Алгоритм выделил два основных кластера
+\end{itemize}
+
+Характеристики кластеров:
+\begin{itemize}
+    \item \textbf{Кластер 0}: Пингвины с меньшими размерами (меньшая длина клюва, глубина клюва, длина ласта и масса)
+    \item \textbf{Кластер 1}: Пингвины с большими размерами (большая длина клюва, глубина клюва, длина ласта и масса)
+\end{itemize}
+
+Это разделение может соответствовать разделению по полу (самцы обычно крупнее самок) или по видам пингвинов.
+
+\section{Применение метода DBSCAN к датасету Penguins}
+
+\subsection{Экспериментирование с параметрами}
+
+Были протестированы различные комбинации параметров для поиска оптимальных значений.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/penguins_dbscan_parameters.png}
+    \caption{Результаты DBSCAN с различными параметрами для датасета Penguins}
+    \label{fig:penguins_dbscan_params}
+\end{figure}
+
+Из эксперимента видно, что:
+\begin{itemize}
+    \item При малых \texttt{eps} (0.3) алгоритм создает много мелких кластеров
+    \item При больших \texttt{eps} (1.0) все точки объединяются в один кластер
+    \item Оптимальный баланс: \texttt{eps=0.7}, \texttt{min\_samples=5}
+\end{itemize}
+
+\subsection{Результаты кластеризации DBSCAN}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/penguins_dbscan_results.png}
+    \caption{Результаты DBSCAN кластеризации на датасете Penguins}
+    \label{fig:penguins_dbscan}
+\end{figure}
+
+Результаты:
+\begin{itemize}
+    \item \textbf{Количество кластеров}: 3
+    \item \textbf{Количество точек-шума}: небольшое количество
+\end{itemize}
+
+DBSCAN выделил 3 кластера, что может соответствовать трем различным видам пингвинов в датасете (Adelie, Chinstrap, Gentoo), хотя информация о видах не использовалась при кластеризации.
+
+\chapter{Сравнение методов кластеризации}
+
+\section{Сравнение на синтетических данных}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/synthetic_comparison.png}
+    \caption{Сравнение методов кластеризации на синтетических данных}
+    \label{fig:synthetic_comparison}
+\end{figure}
+
+\textbf{K-means:}
+\begin{itemize}
+    \item[$\checkmark$] Быстро работает
+    \item[$\checkmark$] Простота интерпретации
+    \item[$\checkmark$] Хорошо работает с шарообразными кластерами
+    \item[$\times$] Требует предварительного задания количества кластеров
+    \item[$\times$] Плохо работает с кластерами неправильной формы
+    \item[$\times$] Чувствителен к выбросам
+\end{itemize}
+
+\textbf{DBSCAN:}
+\begin{itemize}
+    \item[$\checkmark$] Не требует предварительного задания количества кластеров
+    \item[$\checkmark$] Может находить кластеры произвольной формы
+    \item[$\checkmark$] Устойчив к выбросам (помечает их как шум)
+    \item[$\checkmark$] Точнее определил истинное количество кластеров (5 вместо 4)
+    \item[$\times$] Требует тщательной настройки параметров
+    \item[$\times$] Может быть медленнее на больших датасетах
+\end{itemize}
+
+На синтетических данных DBSCAN показал лучшие результаты, точно определив все 5 кластеров.
+
+\section{Сравнение на датасете Penguins}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.95\textwidth]{images/penguins_comparison.png}
+    \caption{Сравнение методов кластеризации на датасете Penguins}
+    \label{fig:penguins_comparison}
+\end{figure}
+
+\textbf{K-means:}
+\begin{itemize}
+    \item Выделил 2 кластера
+    \item Коэффициент силуэта: 0.50
+    \item Разделение по размеру пингвинов
+\end{itemize}
+
+\textbf{DBSCAN:}
+\begin{itemize}
+    \item Выделил 3 кластера
+    \item Меньше точек-шума
+    \item Возможно, более точное разделение по видам
+\end{itemize}
+
+На реальных данных оба метода показали разумные результаты, но DBSCAN выделил больше кластеров, что может быть более информативным.
+
+\chapter{Анализ результатов и выводы}
+
+\section{Ключевые наблюдения}
+
+\begin{enumerate}
+    \item \textbf{На синтетических данных:}
+    \begin{itemize}
+        \item DBSCAN превзошел K-means, точно определив все 5 кластеров
+        \item K-means объединил некоторые близко расположенные кластеры
+        \item Оба метода показали высокое качество кластеризации
+    \end{itemize}
+    
+    \item \textbf{На датасете Penguins:}
+    \begin{itemize}
+        \item K-means выделил 2 кластера (возможно, по размеру/полу)
+        \item DBSCAN выделил 3 кластера (возможно, по видам)
+        \item Оба метода дали разумные результаты, но с разной интерпретацией
+    \end{itemize}
+    
+    \item \textbf{Влияние параметров:}
+    \begin{itemize}
+        \item Для K-means критически важно правильно выбрать K (метод локтя и коэффициент силуэта помогают)
+        \item Для DBSCAN критически важно правильно выбрать \texttt{eps} и \texttt{min\_samples}
+        \item Неправильный выбор параметров может привести к плохим результатам
+    \end{itemize}
+\end{enumerate}
+
+\section{Преимущества и недостатки методов}
+
+\textbf{K-means:}
+\begin{itemize}
+    \item \textbf{Преимущества}: Простота, скорость, интерпретируемость
+    \item \textbf{Недостатки}: Требует знания количества кластеров, работает только с шарообразными кластерами
+\end{itemize}
+
+\textbf{DBSCAN:}
+\begin{itemize}
+    \item \textbf{Преимущества}: Не требует знания количества кластеров, находит кластеры произвольной формы, устойчив к выбросам
+    \item \textbf{Недостатки}: Сложность настройки параметров, может быть медленным на больших данных
+\end{itemize}
+
+\section{Рекомендации по применению}
+
+\begin{enumerate}
+    \item \textbf{Используйте K-means, когда:}
+    \begin{itemize}
+        \item Известно или можно оценить количество кластеров
+        \item Кластеры имеют шарообразную форму
+        \item Нужна быстрая кластеризация
+        \item Данные не содержат много выбросов
+    \end{itemize}
+    
+    \item \textbf{Используйте DBSCAN, когда:}
+    \begin{itemize}
+        \item Количество кластеров неизвестно
+        \item Кластеры могут иметь произвольную форму
+        \item В данных есть выбросы
+        \item Важно найти кластеры на основе плотности
+    \end{itemize}
+\end{enumerate}
+
+\section{Заключение}
+
+В ходе лабораторной работы были успешно применены два метода кластеризации -- K-means и DBSCAN -- на синтетических и реальных данных. Оба метода показали свои сильные и слабые стороны:
+
+\begin{itemize}
+    \item \textbf{K-means} оказался более простым в использовании и интерпретации, но требует предварительного знания количества кластеров
+    \item \textbf{DBSCAN} показал лучшие результаты на синтетических данных и более гибкий подход к определению количества кластеров, но требует тщательной настройки параметров
+\end{itemize}
+
+Выбор метода зависит от конкретной задачи, характеристик данных и требований к результатам кластеризации.
+
+\chapter*{Приложения}
+\addcontentsline{toc}{chapter}{Приложения}
+
+\section*{Использованные библиотеки}
+\addcontentsline{toc}{section}{Использованные библиотеки}
+
+\begin{itemize}
+    \item pandas -- работа с данными
+    \item numpy -- численные вычисления
+    \item matplotlib, seaborn -- визуализация
+    \item scikit-learn -- алгоритмы кластеризации и метрики
+\end{itemize}
+
+\section*{Файлы проекта}
+\addcontentsline{toc}{section}{Файлы проекта}
+
+\begin{itemize}
+    \item \texttt{lab2\_analysis.ipynb} -- основной Jupyter notebook с кодом
+    \item \texttt{penguins.csv} -- датасет пингвинов
+    \item Все сгенерированные изображения сохранены в папке \texttt{images/} в формате PNG
+\end{itemize}
+
+\end{document}
+
